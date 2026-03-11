@@ -19,10 +19,12 @@ import com.ordenesservice.ordenesservice.model.Order;
 import com.ordenesservice.ordenesservice.service.OrderService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/ordenes")
 @RequiredArgsConstructor
+@Slf4j
 public class OrderController {
 
     private final OrderService orderService;
@@ -30,6 +32,8 @@ public class OrderController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Order createOrder(@RequestBody Order order) {
+        log.info("Creando orden usuarioId={} productoId={} cantidad={}",
+                order.getUsuarioId(), order.getProductoId(), order.getCantidad());
         try {
             return orderService.createOrder(order);
         } catch (NoSuchElementException ex) {
