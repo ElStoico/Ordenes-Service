@@ -12,9 +12,19 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/db_ordenes}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 server:
   port: 8082
+
+app:
+  topic:
+    inventory-update: ${INVENTORY_UPDATE_TOPIC:inventory_update_events}
+    order-status-changed: ${ORDER_STATUS_CHANGED_TOPIC:order_status_changed_events}
 
 eureka:
   client:
@@ -43,3 +53,5 @@ logging:
   level:
     root: INFO
     com.ordenesservice.ordenesservice: DEBUG
+    org.springframework.kafka: DEBUG
+    org.apache.kafka: DEBUG

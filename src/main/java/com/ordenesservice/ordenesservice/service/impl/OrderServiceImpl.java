@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 
 import com.ordenesservice.ordenesservice.client.ProductClient;
 import com.ordenesservice.ordenesservice.dto.ProductResponse;
+import com.ordenesservice.ordenesservice.messaging.InventoryEventProducer;
+import com.ordenesservice.ordenesservice.messaging.OrderStatusEventProducer;
 import com.ordenesservice.ordenesservice.model.Order;
 import com.ordenesservice.ordenesservice.repository.OrderRepository;
 import com.ordenesservice.ordenesservice.service.OrderService;
@@ -22,6 +24,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductClient productClient;
+    private final InventoryEventProducer inventoryEventProducer;
+    private final OrderStatusEventProducer orderStatusEventProducer;
 
     @Override
     public Order createOrder(Order order) {
@@ -42,7 +46,9 @@ public class OrderServiceImpl implements OrderService {
         Integer cantidad = order.getCantidad() == null ? 0 : order.getCantidad();
         order.setPrecioTotal(precioUnitario * cantidad);
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        inventoryEventProducer.publishOrderCreated(savedOrder);
+        return savedOrder;
     }
 
     @Override
@@ -59,7 +65,14 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order updateOrderStatus(String id, String estado) {
         Order existingOrder = getOrderById(id);
+        String previousStatus = existingOrder.getEstado();
+        
         existingOrder.setEstado(estado);
-        return orderRepository.save(existingOrder);
+        Order updatedOrder = orderRepository.save(existingOrder);
+        
+        // Publish status change event
+        orderStatusEventProducer.publishOrderStatusChanged(updatedOrder, previousStatus);
+        
+        return updatedOrder;
     }
 }
